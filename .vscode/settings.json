@@ -1,0 +1,8 @@
+{
+    "appService.zipIgnorePattern": [
+        "node_modules{,/**}",
+        ".vscode{,/**}"
+    ],
+    "appService.defaultWebAppToDeploy": "/subscriptions/654aa387-ed56-4973-a25d-7a0be01b72f3/resourceGroups/meal-prep/providers/Microsoft.Web/sites/mealprep",
+    "appService.deploySubpath": "."
+}
