@@ -25,6 +25,7 @@ function App() {
           <Route path="/recipes/new" element={<RecipeNew />}/>
           <Route path="/recipes/:id" element={<RecipeDetail />}/>
           <Route path="/recipes/:id/edit" element={<RecipeEdit />}/>
+          <Route path="/budibase" element={<Budibase />}/>
       </Routes>
     </div>
   )
