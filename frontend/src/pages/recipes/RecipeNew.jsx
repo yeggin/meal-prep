@@ -1,5 +1,5 @@
 //TODO: add calories once u have ai 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
@@ -12,6 +12,8 @@ export default function RecipeNew() {
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [selectedFileName, setSelectedFileName] = useState('');
 
     const [formData, setFormData] = useState({
         name: '',
@@ -32,7 +34,19 @@ export default function RecipeNew() {
 
     // Handle image change
     const handleImageChange = (e) => {
-        setFormData({ ...formData, image: e.target.files[0] });
+        const file = e.target.files[0];
+        if (file) {
+            // Update form data with the selected file
+            setFormData({ ...formData, image: file });
+            setSelectedFileName(file.name);
+            
+            // Create a FileReader to read the image for preview
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                setImagePreview(event.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     // Handle form submission
@@ -71,6 +85,23 @@ export default function RecipeNew() {
             setIsSubmitting(false);
         }
     };
+    // Cleanup function for image preview
+    const removeImage = () => {
+        setFormData({ ...formData, image: null });
+        setImagePreview(null);
+        setSelectedFileName('');
+        
+        // Reset the file input
+        const fileInput = document.getElementById('image-upload');
+        if (fileInput) fileInput.value = '';
+    };
+
+    // Troubleshooting for image upload
+    useEffect(() => {
+        console.log("Image file selected:", formData.image);
+        console.log("Image preview state:", imagePreview ? "Preview available" : "No preview");
+    }, [formData.image, imagePreview]);
+
 
     return (
         <div className="space-y-4 px-4 py-6">
@@ -155,21 +186,66 @@ export default function RecipeNew() {
                 {/* Image upload */}
                 <div className="rounded-lg border bg-card p-4 space-y-3">
                     <h2 className="text-base font-medium">Recipe Image</h2>
-                    <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-4 h-40">
-                        <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                        <p className="text-xs text-muted-foreground text-center mb-3">Tap to upload an image</p>
-                        <input
-                            type="file" // Make sure this is a file input
-                            accept="image/*" // Only allow images
-                            onChange={handleImageChange} // Use handleImageChange
-                            style={{ display: 'none' }} // Hide the default input
-                            id="image-upload" // Add an id for the label
-                        />
-                        <label htmlFor="image-upload"> {/* Use label for styling */}
-                            <Button variant="outline" size="sm" type="button" asChild>Upload</Button>
-                        </label>
-                    </div>
+                    {!imagePreview ? (
+                         /* Upload interface when no image is selected */
+                        <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-4 h-40">
+                            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                            <p className="text-xs text-muted-foreground text-center mb-3">Tap to upload an image</p>
+                            <input
+                                type="file" 
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                style={{ display: 'none' }} // Hide the default input
+                                id="image-upload" 
+                            />
+                            <label htmlFor="image-upload">
+                                <Button variant="outline" size="sm" type="button" asChild>Upload</Button>
+                            </label>
+                        </div>
+                    ) : (
+                        /* Image preview when an image is selected */
+                        <div className="flex flex-col items-center border rounded-md p-2">
+                            <div className="relative w-full h-40 mb-2">
+                                <img 
+                                    src={imagePreview} 
+                                    alt="Recipe preview" 
+                                    className="w-full h-full object-contain rounded-md"
+                                />
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">{selectedFileName}</p>
+                            <div className="flex gap-2">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    type="button"
+                                    onClick={() => document.getElementById('image-upload-replace').click()}
+                                >
+                                    Change Image
+                                </Button>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    className="hidden"
+                                    id="image-upload-replace"
+                                />
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    type="button"
+                                    className="text-destructive"
+                                    onClick={removeImage}
+                                >
+                                    Remove
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </div>
+
+
+
+                
                 {/* Ingredients input */}
                 <div className="rounded-lg border bg-card p-4 space-y-3">
                     <h2 className="text-base font-medium">Ingredients</h2>
