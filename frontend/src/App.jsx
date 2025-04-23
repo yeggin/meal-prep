@@ -9,7 +9,7 @@ import RecipeList from './pages/recipes/RecipeList';
 import RecipeDetail from './pages/recipes/RecipeDetail';
 import RecipeNew from './pages/recipes/RecipeNew';
 import RecipeEdit from './pages/recipes/RecipeEdit';
-//import Budibase from './pages/Budibase'; // adjust path if needed
+// import Budibase from './pages/Budibase'; // adjust path if needed
 
 //import CreateRecipe from './pages/recipes/CreateRecipe';
 
