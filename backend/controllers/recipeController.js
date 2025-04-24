@@ -47,7 +47,7 @@ export const createRecipe = async (req, res) => {
     
         imageUrl = supabase.storage
             .from('recipe-images')
-            .getPublicUrl(uploadData.path).data.publicURL;
+            .getPublicUrl(uploadData.path).data.publicUrl;
         console.log('Generated image URL:', imageUrl);
     } catch (uploadErr) {
         console.error("Image upload exception:", uploadErr);
@@ -105,6 +105,12 @@ export const createRecipe = async (req, res) => {
             return res.status(500).json({ error: 'Error adding instructions' });
         }
     }
+    res.status(201).json({
+        message: 'Recipe created successfully',
+        recipe: data,
+        ingredients: ingredients,
+        steps: instructions
+      });
     
 };
 
@@ -254,7 +260,7 @@ export const updateRecipe = async (req, res) => {
 
             imageUrl = supabase.storage
                 .from('recipe-images')
-                .getPublicUrl(uploadData.path).data.publicURL;
+                .getPublicUrl(uploadData.path).data.publicUrl;
         }
 
         // Convert empty strings to null or 0 before updating
