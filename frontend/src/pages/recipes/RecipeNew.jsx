@@ -85,6 +85,7 @@ export default function RecipeNew() {
             setIsSubmitting(false);
         }
     };
+    
     // Cleanup function for image preview
     const removeImage = () => {
         setFormData({ ...formData, image: null });

@@ -70,7 +70,7 @@ export default function RecipeDetail() {
             {/* Header + Image */}
             <div className="relative h-48">
                 <img
-                src={recipe.image || '/placeholder.jpg'}
+                src={recipe.image_url || '/placeholder.jpg'}
                 alt={recipe.name}
                 className="h-full w-full object-cover"
                 />

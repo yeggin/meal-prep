@@ -32,7 +32,7 @@ export default function RecipeCard({ recipe, onDelete}) {
                             <MoreHorizontal className="h-4 w-4" />
                         </Button>
                         {menuOpen && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg">
+                            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
                                 <Link to={`/recipes/${recipe.id}/edit`}>
                                     <Button variant="ghost" className="w-full text-left">
                                         <Edit className="mr-2" /> Edit
