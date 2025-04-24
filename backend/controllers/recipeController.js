@@ -23,91 +23,87 @@ export const createRecipe = async (req, res) => {
         return res.status(400).json({ error: "Invalid ingredients/instructions format" });
     }
     
+   
+    let imageUrl = null;
+
+    // Upload image to Supabase storage bucket if image is provided
     try {
-        let imageUrl = null;
+        const fileName = `${Date.now()}_${imageFile.originalname}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('recipe-images')
+            .upload(fileName, imageFile.buffer, {
+                cacheControl: '3600',
+                upsert: true,
+                contentType: imageFile.mimetype
+            });
 
-        // Upload image to Supabase storage bucket if image is provided
-        if (imageFile) {
-            const fileName = `${Date.now()}_${imageFile.originalname}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('recipe-images')
-                .upload(fileName, imageFile.buffer, {
-                    cacheControl: '3600',
-                    upsert: true,
-                });
+        console.log('Upload response:', uploadData || uploadError);
 
-            if (uploadError) {
-                console.error("Supabase image upload error:", uploadError);
-                return res.status(500).json({ error: 'Error uploading image' });
+    
+        if (uploadError) {
+            console.error("Supabase image upload error:", uploadError);
+            return res.status(500).json({ error: 'Error uploading image', details: uploadError });
+        }
+    
+        imageUrl = supabase.storage
+            .from('recipe-images')
+            .getPublicUrl(uploadData.path).data.publicURL;
+        console.log('Generated image URL:', imageUrl);
+    } catch (uploadErr) {
+        console.error("Image upload exception:", uploadErr);
+        return res.status(500).json({ error: 'Exception during image upload', details: uploadErr.message });
+    }
+
+    // Convert empty strings to null or 0 before inserting
+    duration = duration === "" ? null : parseInt(duration, 10);
+    // Insert recipe data into recipes table
+    const { data, error } = await supabase
+        .from('recipes')
+        .insert([
+            {   //user_id: user_id, // Foreign key
+                name: name,
+                description: description,
+                duration: duration,
+                category: category,
+                //calories: calories,
+                ingredient_count: ingredients.length,
+                image_url: imageUrl
             }
-
-            imageUrl = supabase.storage
-                .from('recipe-images')
-                .getPublicUrl(uploadData.path).data.publicURL;
+        ])
+        .select()
+        .single();
+    if (error) {
+        console.error("Supabase recipe insert error:", error);
+        return res.status(500).json({ error: 'Error creating recipe' });
+    }
+    // If ingredients are provided in the request body, insert them into the recipeingredients table
+    if (ingredients && ingredients.length > 0) {
+        const ingredientData = ingredients.map(ingredient => ({
+            recipe_id: data.id, // Foreign key
+            content: ingredient
+        }));
+        const { error: ingredientError } = await supabase
+            .from('recipeingredients')
+            .insert(ingredientData);
+        if (ingredientError) {
+            return res.status(500).json({ error: 'Error adding ingredients' });
         }
-
-        // Convert empty strings to null or 0 before inserting
-        duration = duration === "" ? null : parseInt(duration, 10);
-
-        // Insert recipe data into recipes table
-        const { data, error } = await supabase
-            .from('recipes')
-            .insert([
-                {   //user_id: user_id, // Foreign key
-                    name: name,
-                    description: description,
-                    duration: duration,
-                    category: category,
-                    //calories: calories,
-                    ingredient_count: ingredients.length,
-                    image_url: imageUrl
-                }
-            ])
-            .select()
-            .single();
-
-        if (error) {
-            console.error("Supabase recipe insert error:", error);
-            return res.status(500).json({ error: 'Error creating recipe' });
+    }
+    // If instructions are provided in the request body, insert them into the recipesteps table
+    if (instructions && instructions.length > 0) {
+        const instructionData = instructions.map((step, index) => ({
+            recipe_id: data.id, // Foreign key
+            content: step,
+            step_number: index + 1 // Optional: store order
+        }));
+    
+        const { error: instructionError } = await supabase
+            .from('recipesteps')
+            .insert(instructionData);
+    
+        if (instructionError) {
+            return res.status(500).json({ error: 'Error adding instructions' });
         }
-
-        // If ingredients are provided in the request body, insert them into the recipeingredients table
-        if (ingredients && ingredients.length > 0) {
-            const ingredientData = ingredients.map(ingredient => ({
-                recipe_id: data.id, // Foreign key
-                content: ingredient
-            }));
-
-            const { error: ingredientError } = await supabase
-                .from('recipeingredients')
-                .insert(ingredientData);
-
-            if (ingredientError) {
-                return res.status(500).json({ error: 'Error adding ingredients' });
-            }
-        }
-
-        // If instructions are provided in the request body, insert them into the recipesteps table
-        if (instructions && instructions.length > 0) {
-            const instructionData = instructions.map((step, index) => ({
-                recipe_id: data.id, // Foreign key
-                content: step,
-                step_number: index + 1 // Optional: store order
-            }));
-        
-            const { error: instructionError } = await supabase
-                .from('recipesteps')
-                .insert(instructionData);
-        
-            if (instructionError) {
-                return res.status(500).json({ error: 'Error adding instructions' });
-            }
-        }
-        res.status(201).json(data);
-    } 
-    catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
     }
     
 };
