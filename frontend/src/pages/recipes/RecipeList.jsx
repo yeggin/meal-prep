@@ -20,7 +20,8 @@ export default function RecipeList() {
             setIsLoading(true);
             setError(null);
             const response = await getRecipes({ search });
-            setRecipes(response);
+            // Make sure response is an array before setting it
+            setRecipes(Array.isArray(response) ? response : (response?.data || []));
         }
         catch (err) {
             setError('Failed to load recipes. Please try again.');
