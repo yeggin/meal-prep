@@ -1,4 +1,3 @@
-
 import supabase from "../supabase.js";
 
 
@@ -288,7 +287,7 @@ export const updateRecipe = async (req, res) => {
 
         // Update ingredients: Delete existing and insert new ones
         if (ingredients && ingredients.length > 0) {
-            // First delete existing ingredients
+            // Delete existing ingredients
             const { error: deleteIngredientsError } = await supabase
                 .from('recipeingredients')
                 .delete()

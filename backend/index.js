@@ -18,8 +18,10 @@ app.use(express.json());
 
 // Routes
 import recipeRoutes from './routes/recipes.js';
+import mealplanRoutes from './routes/mealplans.js';
 
 app.use('/api/', recipeRoutes);
+app.use('/api/', mealplanRoutes);
 
 // Start server
 app.listen(PORT, () => {
