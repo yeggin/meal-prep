@@ -13,7 +13,13 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Middleware
-app.use(cors()); 
+app.use(cors({
+    origin: [
+        'https://meal-prep-git-main-joanne-kims-projects.vercel.app', 
+        'http://localhost:3000' // For local development
+      ],
+    credentials: true
+})); 
 app.use(express.json());
 
 // Routes
