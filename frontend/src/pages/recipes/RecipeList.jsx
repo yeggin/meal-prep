@@ -20,39 +20,15 @@ export default function RecipeList() {
             setIsLoading(true);
             setError(null);
             const response = await getRecipes({ search });
-            console.log("API Response:", response);
-            console.log("Type:", typeof response);
-            console.log("Is Array:", Array.isArray(response));
-            // Handle different response formats
-            if (Array.isArray(response)) {
-            // If response is already an array
-            setRecipes(response);
-            } else if (typeof response === 'object' && response !== null) {
-            // If response is an object, try to extract the recipes array
-            
-            // Option 1: If recipes are in a 'data' property
-            if (Array.isArray(response.data)) {
-                setRecipes(response.data);
-            }
-            // Option 2: If recipes are in a 'recipes' property
-            else if (Array.isArray(response.recipes)) {
-                setRecipes(response.recipes);
-            }
-            // Option 3: If the object itself is a collection of recipes with numeric keys
-            else if (Object.values(response).length > 0 && 
-                    typeof Object.values(response)[0] === 'object') {
-                setRecipes(Object.values(response));
-            }
-            // Fallback if we can't find an array
-            else {
-                console.error("Couldn't find recipes array in response:", response);
-                setRecipes([]);
-                setError('Unable to process recipes from server.');
-            }
-            } else {
-            // If response is neither an array nor an object
-            setRecipes([]);
-            setError('Received invalid data format from server.');
+            // console.log("API Response:", response);
+            // console.log("Type:", typeof response);
+            // console.log("Is Array:", Array.isArray(response));
+            const apiUrl = apiClient.defaults.baseURL;
+            console.log("Using API URL:", apiUrl);
+            // Set this as user-visible error
+            if (!apiUrl || apiUrl.includes('localhost')) {
+            setError(`API Configuration Issue: Using URL "${apiUrl}"`);
+            return;
             }
         }
         catch (err) {
