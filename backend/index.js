@@ -20,7 +20,7 @@ app.use(express.json());
 import recipeRoutes from './routes/recipes.js';
 import mealplanRoutes from './routes/mealplans.js';
 
-app.use('/api/', recipeRoutes);
+app.use('/api/recipes', recipeRoutes);
 app.use('/api/', mealplanRoutes);
 
 // Start server
