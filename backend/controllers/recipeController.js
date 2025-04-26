@@ -26,9 +26,26 @@ export const createRecipe = async (req, res) => {
     let imageUrl = null;
 
     // Upload image to Supabase storage bucket if image is provided
+    // Upload image to Supabase storage bucket if image is provided
     if (imageFile) {
         try {
-            const fileName = `${Date.now()}_${imageFile.originalname}`;
+            console.log('Image file details:', {
+                name: imageFile.originalname,
+                size: imageFile.size,
+                type: imageFile.mimetype,
+                hasBuffer: !!imageFile.buffer
+            });
+            
+            // Create a safe filename by removing special characters
+            const safeOriginalName = imageFile.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const fileName = `${Date.now()}_${safeOriginalName}`;
+            
+            console.log('Attempting to upload file:', fileName);
+            
+            if (!imageFile.buffer || imageFile.buffer.length === 0) {
+                throw new Error('Image buffer is empty or undefined');
+            }
+            
             const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('recipe-images')
                 .upload(fileName, imageFile.buffer, {
@@ -37,21 +54,46 @@ export const createRecipe = async (req, res) => {
                     contentType: imageFile.mimetype
                 });
 
-            console.log('Upload response:', uploadData || uploadError);
+            console.log('Upload attempt completed');
+            console.log('Upload response data:', uploadData);
+            console.log('Upload error (if any):', uploadError);
 
             if (uploadError) {
                 console.error("Supabase image upload error:", uploadError);
-                return res.status(500).json({ error: 'Error uploading image', details: uploadError });
+                return res.status(500).json({ 
+                    error: 'Error uploading image to Supabase', 
+                    details: uploadError,
+                    message: uploadError.message
+                });
             }
-        
-            imageUrl = supabase.storage
+            
+            if (!uploadData || !uploadData.path) {
+                throw new Error('Upload succeeded but data or path is missing');
+            }
+            
+            const urlResult = supabase.storage
                 .from('recipe-images')
-                .getPublicUrl(uploadData.path).data.publicUrl;
+                .getPublicUrl(uploadData.path);
+                
+            console.log('URL result:', urlResult);
+                
+            if (!urlResult || !urlResult.data || !urlResult.data.publicUrl) {
+                throw new Error('Failed to generate public URL');
+            }
+            
+            imageUrl = urlResult.data.publicUrl;
             console.log('Generated image URL:', imageUrl);
         } catch (uploadErr) {
             console.error("Image upload exception:", uploadErr);
-            return res.status(500).json({ error: 'Exception during image upload', details: uploadErr.message });
+            console.error("Error stack:", uploadErr.stack);
+            return res.status(500).json({ 
+                error: 'Exception during image upload',
+                details: uploadErr.message,
+                stack: uploadErr.stack
+            });
         }
+    } else {
+        console.log('No image file provided, skipping upload');
     }
 
     // Convert empty strings to null or 0 before inserting
