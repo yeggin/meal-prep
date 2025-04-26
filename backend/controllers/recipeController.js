@@ -26,31 +26,32 @@ export const createRecipe = async (req, res) => {
     let imageUrl = null;
 
     // Upload image to Supabase storage bucket if image is provided
-    try {
-        const fileName = `${Date.now()}_${imageFile.originalname}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('recipe-images')
-            .upload(fileName, imageFile.buffer, {
-                cacheControl: '3600',
-                upsert: true,
-                contentType: imageFile.mimetype
-            });
+    if (imageFile) {
+        try {
+            const fileName = `${Date.now()}_${imageFile.originalname}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('recipe-images')
+                .upload(fileName, imageFile.buffer, {
+                    cacheControl: '3600',
+                    upsert: true,
+                    contentType: imageFile.mimetype
+                });
 
-        console.log('Upload response:', uploadData || uploadError);
+            console.log('Upload response:', uploadData || uploadError);
 
-    
-        if (uploadError) {
-            console.error("Supabase image upload error:", uploadError);
-            return res.status(500).json({ error: 'Error uploading image', details: uploadError });
+            if (uploadError) {
+                console.error("Supabase image upload error:", uploadError);
+                return res.status(500).json({ error: 'Error uploading image', details: uploadError });
+            }
+        
+            imageUrl = supabase.storage
+                .from('recipe-images')
+                .getPublicUrl(uploadData.path).data.publicUrl;
+            console.log('Generated image URL:', imageUrl);
+        } catch (uploadErr) {
+            console.error("Image upload exception:", uploadErr);
+            return res.status(500).json({ error: 'Exception during image upload', details: uploadErr.message });
         }
-    
-        imageUrl = supabase.storage
-            .from('recipe-images')
-            .getPublicUrl(uploadData.path).data.publicUrl;
-        console.log('Generated image URL:', imageUrl);
-    } catch (uploadErr) {
-        console.error("Image upload exception:", uploadErr);
-        return res.status(500).json({ error: 'Exception during image upload', details: uploadErr.message });
     }
 
     // Convert empty strings to null or 0 before inserting
