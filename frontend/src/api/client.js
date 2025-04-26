@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-    baseURL: 'https://mealprepfinal-h4hjb2bnagcqh4fb.centralus-01.azurewebsites.net/api' || 'http://localhost:4000/api',
+    baseURL: 'mealprepfinal-h4hjb2bnagcqh4fb.centralus-01.azurewebsites.net' || 'http://localhost:4000/api',
     // headers: {
     //     'Content-Type': 'multipart/form-data',
     // },
