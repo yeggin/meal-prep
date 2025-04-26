@@ -4,6 +4,7 @@ import { Search, Plus } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import RecipeCard from '../../components/recipes/RecipeCard';
 import { getRecipes, deleteRecipe } from '../../api/recipes';
+import apiClient from '../../api/client';
 
 export default function RecipeList() {
     const [recipes, setRecipes] = useState([]);
@@ -20,9 +21,9 @@ export default function RecipeList() {
             setIsLoading(true);
             setError(null);
             const response = await getRecipes({ search });
-            // console.log("API Response:", response);
-            // console.log("Type:", typeof response);
-            // console.log("Is Array:", Array.isArray(response));
+            console.log("API Response:", response);
+            console.log("Type:", typeof response);
+            console.log("Is Array:", Array.isArray(response));
             const apiUrl = apiClient.defaults.baseURL;
             console.log("Using API URL:", apiUrl);
             // Set this as user-visible error
