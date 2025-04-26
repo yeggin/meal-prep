@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_AZURE_API_URL || 'http://localhost:4000/api',
+    baseURL: process.env.VITE_AZURE_API_URL || 'http://localhost:4000/api',
     // headers: {
     //     'Content-Type': 'multipart/form-data',
     // },
