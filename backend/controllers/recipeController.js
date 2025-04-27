@@ -139,6 +139,7 @@ export const createRecipe = async (req, res) => {
             const recipeName = name.replace(/\s+/g, '+');
             imageUrl = `https://placehold.co/400x300?text=${recipeName}`;
             console.log('Using placeholder image:', imageUrl)
+        }
     }
 
     // Convert empty strings to null or 0 before inserting
