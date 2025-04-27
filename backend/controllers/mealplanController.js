@@ -66,7 +66,9 @@ export const createMealPlan = async (req, res) => {
 export const getAllMealPlans = async (req, res) => {
     try {
         const searchTerm = req.query.search;
-        let query = supabase.from('mealplans').select('*');
+        let query = supabase
+            .from('mealplans')
+            .select(`*,mealplanitems:mealplanitems(*,recipe:recipes(*))`);
 
         if (searchTerm) {
             query = query.ilike('name', `%${searchTerm}%`);
@@ -79,7 +81,14 @@ export const getAllMealPlans = async (req, res) => {
             return res.status(500).json({ error: "Error fetching meal plans."});
         }
 
-        res.status(200).json(mealplans);
+        const transformedMealplans = mealplans.map(mealplan => {
+            return {
+                ...mealplan,
+                recipes: mealplan.mealplanitems.map(item => item.recipe)
+            };
+        });
+
+        res.status(200).json(transformedMealplans);
     } catch (error) {
         console.error('Unexpected error:', error);
         res.status(500).json({ error: "Internal server error." });
@@ -92,7 +101,7 @@ export const getMealPlanById = async (req, res) => {
     try {
         const {data: mealplan, error: mealplanError} = await supabase
             .from('mealplans')
-            .select('*')
+            .select(`*,mealplanitems:mealplanitems(*,recipe:recipes(*))`)
             .eq('id', id)
             .single()
         
@@ -110,7 +119,13 @@ export const getMealPlanById = async (req, res) => {
             console.error('Supabase meal plan items error:', mealplanitemsError);
             return res.status(500).json({ error: "Error fetching meal plan items."});
         }
-        res.status(200).json({ ...mealplan, mealplanitems})
+
+        const transformedMealplan = {
+            ...mealplan,
+            recipes: mealplan.mealplanitems.map(item => item.recipe)
+        };
+
+        res.status(200).json(transformedMealplan)
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal server error."})

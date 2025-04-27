@@ -1,5 +1,5 @@
 import supabase from "../supabase.js";
-
+const USE_REAL_UPLOADS = false;
 
 // Create new recipe
 export const createRecipe = async (req, res) => {
@@ -27,24 +27,24 @@ export const createRecipe = async (req, res) => {
 
     // Upload image to Supabase storage bucket if image is provided
     // Upload image to Supabase storage bucket if image is provided
-    if (imageFile) {
-        try {
-            console.log('Image upload to Supabase is currently disabled');
-            console.log('Using placeholder image instead');
+    // if (imageFile) {
+    //     try {
+    //         console.log('Image upload to Supabase is currently disabled');
+    //         console.log('Using placeholder image instead');
             
-            // Generate a placeholder image URL based on the recipe name for some variety
-            const recipeName = name.replace(/\s+/g, '+');
-            imageUrl = `https://placehold.co/400x300?text=${recipeName}`;
+    //         // Generate a placeholder image URL based on the recipe name for some variety
+    //         const recipeName = name.replace(/\s+/g, '+');
+    //         imageUrl = `https://placehold.co/400x300?text=${recipeName}`;
             
-            console.log('Generated placeholder image URL:', imageUrl);
-        } catch (uploadErr) {
-            console.error("Error setting placeholder image:", uploadErr);
-            // Use a default placeholder if even the custom one fails
-            imageUrl = 'https://via.placeholder.com/400x300?text=Recipe';
-        }
-    } else {
-        console.log('No image provided, no placeholder needed');
-    }
+    //         console.log('Generated placeholder image URL:', imageUrl);
+    //     } catch (uploadErr) {
+    //         console.error("Error setting placeholder image:", uploadErr);
+    //         // Use a default placeholder if even the custom one fails
+    //         imageUrl = 'https://via.placeholder.com/400x300?text=Recipe';
+    //     }
+    // } else {
+    //     console.log('No image provided, no placeholder needed');
+    // }
     // if (imageFile) {
         
         // console.log('Preparing upload to bucket:', 'recipe-images');
@@ -69,74 +69,77 @@ export const createRecipe = async (req, res) => {
         //     console.error('Upload exception:', err);
         // }
     }
-    // if (imageFile) {
-    //     try {
-    //         console.log('Image file details:', {
-    //             name: imageFile.originalname,
-    //             size: imageFile.size,
-    //             type: imageFile.mimetype,
-    //             hasBuffer: !!imageFile.buffer
-    //         });
-            
-    //         // Create a safe filename by removing special characters
-    //         const safeOriginalName = imageFile.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-    //         const fileName = `${Date.now()}_${safeOriginalName}`;
-            
-    //         console.log('Attempting to upload file:', fileName);
-            
-    //         if (!imageFile.buffer || imageFile.buffer.length === 0) {
-    //             throw new Error('Image buffer is empty or undefined');
-    //         }
-            
-    //         const { data: uploadData, error: uploadError } = await supabase.storage
-    //             .from('recipe-images')
-    //             .upload(fileName, imageFile.buffer, {
-    //                 cacheControl: '3600',
-    //                 upsert: true,
-    //                 contentType: imageFile.mimetype
-    //             });
-
-    //         console.log('Upload attempt completed');
-    //         console.log('Upload response data:', uploadData);
-    //         console.log('Upload error (if any):', uploadError);
-
-    //         if (uploadError) {
-    //             console.error("Supabase image upload error:", uploadError);
-    //             return res.status(500).json({ 
-    //                 error: 'Error uploading image to Supabase', 
-    //                 details: uploadError,
-    //                 message: uploadError.message
-    //             });
-    //         }
-            
-    //         if (!uploadData || !uploadData.path) {
-    //             throw new Error('Upload succeeded but data or path is missing');
-    //         }
-            
-    //         const urlResult = supabase.storage
-    //             .from('recipe-images')
-    //             .getPublicUrl(uploadData.path);
+    if (imageFile) {
+        if (USE_REAL_UPLOADS) {
+            try {
+                console.log('Image file details:', {
+                    name: imageFile.originalname,
+                    size: imageFile.size,
+                    type: imageFile.mimetype,
+                    hasBuffer: !!imageFile.buffer
+                });
                 
-    //         console.log('URL result:', urlResult);
+                // Create a safe filename by removing special characters
+                const safeOriginalName = imageFile.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+                const fileName = `${Date.now()}_${safeOriginalName}`;
                 
-    //         if (!urlResult || !urlResult.data || !urlResult.data.publicUrl) {
-    //             throw new Error('Failed to generate public URL');
-    //         }
-            
-    //         imageUrl = urlResult.data.publicUrl;
-    //         console.log('Generated image URL:', imageUrl);
-    //     } catch (uploadErr) {
-    //         console.error("Image upload exception:", uploadErr);
-    //         console.error("Error stack:", uploadErr.stack);
-    //         return res.status(500).json({ 
-    //             error: 'Exception during image upload',
-    //             details: uploadErr.message,
-    //             stack: uploadErr.stack
-    //         });
-    //     }
-    // } else {
-    //     console.log('No image file provided, skipping upload');
-    // }
+                console.log('Attempting to upload file:', fileName);
+                
+                if (!imageFile.buffer || imageFile.buffer.length === 0) {
+                    throw new Error('Image buffer is empty or undefined');
+                }
+                
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('recipe-images')
+                    .upload(fileName, imageFile.buffer, {
+                        cacheControl: '3600',
+                        upsert: true,
+                        contentType: imageFile.mimetype
+                    });
+
+                console.log('Upload attempt completed');
+                console.log('Upload response data:', uploadData);
+                console.log('Upload error (if any):', uploadError);
+
+                if (uploadError) {
+                    console.error("Supabase image upload error:", uploadError);
+                    return res.status(500).json({ 
+                        error: 'Error uploading image to Supabase', 
+                        details: uploadError,
+                        message: uploadError.message
+                    });
+                }
+                
+                if (!uploadData || !uploadData.path) {
+                    throw new Error('Upload succeeded but data or path is missing');
+                }
+                
+                const urlResult = supabase.storage
+                    .from('recipe-images')
+                    .getPublicUrl(uploadData.path);
+                    
+                console.log('URL result:', urlResult);
+                    
+                if (!urlResult || !urlResult.data || !urlResult.data.publicUrl) {
+                    throw new Error('Failed to generate public URL');
+                }
+                
+                imageUrl = urlResult.data.publicUrl;
+                console.log('Generated image URL:', imageUrl);
+            } catch (uploadErr) {
+                console.error("Image upload exception:", uploadErr);
+                console.error("Error stack:", uploadErr.stack);
+                return res.status(500).json({ 
+                    error: 'Exception during image upload',
+                    details: uploadErr.message,
+                    stack: uploadErr.stack
+                });
+            }
+        } else {
+            const recipeName = name.replace(/\s+/g, '+');
+            imageUrl = `https://placehold.co/400x300?text=${recipeName}`;
+            console.log('Using placeholder image:', imageUrl)
+    }
 
     // Convert empty strings to null or 0 before inserting
     duration = duration === "" ? null : parseInt(duration, 10);
