@@ -68,7 +68,7 @@ export const createRecipe = async (req, res) => {
         // } catch (err) {
         //     console.error('Upload exception:', err);
         // }
-    }
+    // }
     if (imageFile) {
         if (USE_REAL_UPLOADS) {
             try {
