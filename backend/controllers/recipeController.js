@@ -26,28 +26,48 @@ export const createRecipe = async (req, res) => {
     let imageUrl = null;
 
     // Upload image to Supabase storage bucket if image is provided
+    // Upload image to Supabase storage bucket if image is provided
     if (imageFile) {
-        console.log('Preparing upload to bucket:', 'recipe-images');
-        console.log('Buffer exists:', !!imageFile.buffer);
-        console.log('Buffer size:', imageFile.buffer?.length);
         try {
-            const fileName = `test_${Date.now()}.jpg`;
+            console.log('Image upload to Supabase is currently disabled');
+            console.log('Using placeholder image instead');
             
-            // Basic upload with minimal options
-            const { data, error } = await supabase.storage
-                .from('recipe-images')
-                .upload(fileName, imageFile.buffer);
-                
-            console.log('Upload result:', { success: !!data, error });
+            // Generate a placeholder image URL based on the recipe name for some variety
+            const recipeName = name.replace(/\s+/g, '+');
+            imageUrl = `https://placehold.co/400x300?text=${recipeName}`;
             
-            if (data) {
-                imageUrl = supabase.storage
-                    .from('recipe-images')
-                    .getPublicUrl(fileName).data.publicUrl;
-            }
-        } catch (err) {
-            console.error('Upload exception:', err);
+            console.log('Generated placeholder image URL:', imageUrl);
+        } catch (uploadErr) {
+            console.error("Error setting placeholder image:", uploadErr);
+            // Use a default placeholder if even the custom one fails
+            imageUrl = 'https://via.placeholder.com/400x300?text=Recipe';
         }
+    } else {
+        console.log('No image provided, no placeholder needed');
+    }
+    // if (imageFile) {
+        
+        // console.log('Preparing upload to bucket:', 'recipe-images');
+        // console.log('Buffer exists:', !!imageFile.buffer);
+        // console.log('Buffer size:', imageFile.buffer?.length);
+        // try {
+        //     const fileName = `test_${Date.now()}.jpg`;
+            
+        //     // Basic upload with minimal options
+        //     const { data, error } = await supabase.storage
+        //         .from('recipe-images')
+        //         .upload(fileName, imageFile.buffer);
+                
+        //     console.log('Upload result:', { success: !!data, error });
+            
+        //     if (data) {
+        //         imageUrl = supabase.storage
+        //             .from('recipe-images')
+        //             .getPublicUrl(fileName).data.publicUrl;
+        //     }
+        // } catch (err) {
+        //     console.error('Upload exception:', err);
+        // }
     }
     // if (imageFile) {
     //     try {
