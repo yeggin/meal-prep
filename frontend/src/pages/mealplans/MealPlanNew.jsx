@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { ChevronLeft, Plus, X, CalendarDays } from "lucide-react";
 import { createMealPlan } from '../../api/mealplans';
+import RecipeSelection from '../../components/mealplans/RecipeSelection';
 
 export default function MealPlanNew() {
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
+    const [recipeSelectionIsOpen, setRecipeSelectionIsOpen] = useState(false);
+    const [currentMealContext, setCurrentMealContext] = useState({ day: null, mealType: null });
     
-
     const [formData, setFormData] = useState({
         name: '',
         start_date: "",
@@ -21,6 +22,7 @@ export default function MealPlanNew() {
     const [selectedRecipes, setSelectedRecipes] = useState({});
     const weekDays = ["Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const mealTypes = ["Breakfast", "Lunch", "Dinner", "Snacks"];
+    
 
     // Handle form data change
     const handleFormChange = (e) => {
@@ -28,19 +30,41 @@ export default function MealPlanNew() {
         setFormData({ ...formData, [name]: value });
     };
 
-    // Handle recipe selection
-    const handleAddRecipe = (day, mealType) => {
-        // Navigate to recipe selection page with day and meal type as parameters
-        navigate(`/recipes/select?day=${day}&mealType=${mealType}`);
-      };
+    // Handle opening recipe selection
+    const handleOpenRecipeSelection = (day, mealType) => {
+        setCurrentMealContext({ day, mealType });
+        setRecipeSelectionIsOpen(true);
+    };
     
-    const handleRemoveRecipe = (day, mealType, recipeId) => {
+    // Handle recipe selection completion
+    const handleRecipeSelectionDone = (recipes) => {
+        const { day, mealType } = currentMealContext;
+        
         setSelectedRecipes(prev => {
         const newState = { ...prev };
-        if (newState[day] && newState[day][mealType]) {
-            newState[day][mealType] = newState[day][mealType].filter(recipe => recipe.id !== recipeId);
+        
+        // Initialize nested structure if it doesn't exist
+        if (!newState[day]) {
+            newState[day] = {};
         }
+        
+        // Set the selected recipes for this day and meal type
+        newState[day][mealType] = recipes;
+        
         return newState;
+        });
+        
+        setRecipeSelectionIsOpen(false);
+    };
+    
+    // Handle recipe removal
+    const handleRemoveRecipe = (day, mealType, recipeId) => {
+        setSelectedRecipes(prev => {
+            const newState = { ...prev };
+            if (newState[day] && newState[day][mealType]) {
+                newState[day][mealType] = newState[day][mealType].filter(recipe => recipe.id !== recipeId);
+            }
+            return newState;
         });
     };
 
@@ -79,8 +103,8 @@ export default function MealPlanNew() {
             });
 
             // Submit meal plan data to backend
-            await createMealPlan(formToSubmit);
-            navigate('/recipes');
+            await createMealPlan(mealPlanData);
+            navigate('/mealplans');
         } 
         catch (err) {
             setError('Error creating meal plan. Please try again.');
@@ -93,33 +117,51 @@ export default function MealPlanNew() {
     
     return (
         <div className="space-y-4 px-4 py-6">
-            {/* TODO add page header */}
+            {/* Page header */}
+            <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate('/mealplans')}>
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <h1 className="text-xl font-bold">Create Meal Plan</h1>
+            </div>
+            
             {error && (
                 <div className="bg-destructive/10 text-destructive p-3 rounded-md mt-4">
                     {error}
                 </div>
             )}
 
+            {/* Recipe Selection Modal */}
+            <RecipeSelection
+                day={currentMealContext.day}
+                mealType={currentMealContext.mealType}
+                initialSelectedRecipes={
+                    selectedRecipes[currentMealContext.day]?.[currentMealContext.mealType] || []
+                }
+                onSelectionDone={handleRecipeSelectionDone}
+                onCancel={() => setRecipeSelectionIsOpen(false)}
+                isOpen={recipeSelectionIsOpen}
+            />
+
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Meal plan details */}
                 <div className="rounded-lg border bg-card p-4 space-y-4">
                     {/* Meal plan name */}
                     <div className="space-y-2">
-                        <label htmlFor="recipe-name" className="text-sm font-medium">
+                        <label htmlFor="plan-name" className="text-sm font-medium">
                             Plan Name
                         </label>
                         <input
                             type="text"
                             id="plan-name"
                             name="name"
-                            value={formData.start_date || ""}
+                            value={formData.name}
                             onChange={handleFormChange}
                             placeholder="e.g., Weekly Diet Plan"
                             className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                         />
                     </div>
                 
-
                     {/* Date Input */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
@@ -156,16 +198,16 @@ export default function MealPlanNew() {
                     {/* Day tabs */}
                     <div className="flex overflow-x-auto border-b">
                         {weekDays.map(day => (
-                        <button
-                            key={day}
-                            type="button"
-                            onClick={() => setActiveDay(day)}
-                            className={`flex-1 min-w-16 py-2 text-center text-sm ${
-                            activeDay === day ? "border-b-2 border-primary font-medium" : "text-muted-foreground"
-                            }`}
-                        >
-                            {day}
-                        </button>
+                            <button
+                                key={day}
+                                type="button"
+                                onClick={() => setActiveDay(day)}
+                                className={`flex-1 min-w-16 py-2 text-center text-sm ${
+                                    activeDay === day ? "border-b-2 border-primary font-medium" : "text-muted-foreground"
+                                }`}
+                            >
+                                {day}
+                            </button>
                         ))}
                     </div>
 
@@ -180,7 +222,7 @@ export default function MealPlanNew() {
                                         variant="ghost"
                                         size="icon"
                                         className="h-6 w-6"
-                                        onClick={() => handleAddRecipe(activeDay, mealType)}
+                                        onClick={() => handleOpenRecipeSelection(activeDay, mealType)}
                                     >
                                         <Plus className="h-4 w-4" />
                                     </Button>

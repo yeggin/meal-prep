@@ -11,6 +11,7 @@ import RecipeNew from './pages/recipes/RecipeNew';
 import RecipeEdit from './pages/recipes/RecipeEdit';
 import MealPlanList from './pages/mealplans/MealPlanList';
 import MealPlanNew from './pages/mealplans/MealPlanNew';
+import MealPlanEdit from './pages/mealplans/MealPlanEdit';
 
 
 // import Budibase from './pages/Budibase'; // adjust path if needed
@@ -33,6 +34,7 @@ function App() {
           <Route path="/recipes/:id/edit" element={<RecipeEdit />}/>
           <Route path="/mealplans" element={<MealPlanList />}/>
           <Route path="/mealplans/new" element={<MealPlanNew />}/>
+          <Route path="/mealplans/:id" element={<MealPlanEdit />}/>
           {/* <Route path="/budibase" element={<Budibase />}/> */}
       </Routes>
     </div>
