@@ -34,26 +34,45 @@ export default function MealPlanEdit() {
             try {
                 setIsLoading(true);
                 const response = await getMealPlanById(id);
-                setMealPlan(response);
+                console.log("API Response:", response); 
+                // Set basic meal plan data
+                setMealPlan({
+                    id: response.id,
+                    name: response.name || '',
+                    start_date: response.start_date || '',
+                    end_date: response.end_date || '',
+                    // Any other fields you need
+                });
                 
                 // Convert meal_items array to the selectedRecipes structure
                 const recipesMap = {};
                 
                 // Assuming response.meal_items contains recipe data with day and meal_type
-                response.meal_items.forEach(item => {
-                    const { day, meal_type, recipe } = item;
-                    
-                    if (!recipesMap[day]) {
-                        recipesMap[day] = {};
-                    }
-                    
-                    if (!recipesMap[day][meal_type]) {
-                        recipesMap[day][meal_type] = [];
-                    }
-                    
-                    recipesMap[day][meal_type].push(recipe);
-                });
-                
+                if (response && response.meal_items && Array.isArray(response.meal_items)) {
+                    response.meal_items.forEach(item => {
+                        console.log("Processing meal item:", item);
+                        const { day, meal_type, recipe } = item;
+                        
+                        if (!recipesMap[day]) {
+                            recipesMap[day] = {};
+                        }
+                        
+                        if (!recipesMap[day][meal_type]) {
+                            recipesMap[day][meal_type] = [];
+                        }
+                        
+                        recipesMap[day][meal_type].push(recipe);
+                    });
+                } else {
+                    console.log("Looking for alternative meal data structure");
+                    // Check for any property that could contain meal information
+                    Object.keys(response).forEach(key => {
+                        if (Array.isArray(response[key])) {
+                            console.log(`Found array in property: ${key}`, response[key]);
+                        }
+                    });
+                }
+                console.log("Processed recipesMap:", recipesMap); 
                 setSelectedRecipes(recipesMap);
                 
             } catch (err) {
@@ -123,6 +142,7 @@ export default function MealPlanEdit() {
 
             // Prepare updated meal plan data
             const updatedMealPlan = {
+                id: id,
                 ...mealPlan,
                 meal_items: [] // We'll rebuild this from selectedRecipes
             };
@@ -139,8 +159,8 @@ export default function MealPlanEdit() {
                     });
                 });
             });
-
-            const response = await updateMealPlan(updatedMealPlan);
+            console.log("About to send updated meal plan:", updatedMealPlan);
+            const response = await updateMealPlan(updatedMealPlan.id, updatedMealPlan);
             console.log("Meal plan updated:", response);
             navigate('/mealplans');
         } catch (err) {

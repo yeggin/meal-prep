@@ -33,6 +33,7 @@ export const createMealPlan = async (mealplan) => {
 };
 export const updateMealPlan = async (id, mealplan) => {
     try {
+        console.log("Sending meal plan data:", JSON.stringify(mealplan));
         const response = await apiClient.put(`/mealplans/${id}`, mealplan);
         return response.data;
     }

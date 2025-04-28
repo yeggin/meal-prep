@@ -90,21 +90,22 @@ export default function MealPlanNew() {
             };
 
             // Convert selectedRecipes structure to meal_items array for backend
+            // Convert selectedRecipes structure to meal_items array for backend
             Object.keys(selectedRecipes).forEach(day => {
-                Object.keys(selectedRecipes[day] || {}).forEach(mealType => {
-                    selectedRecipes[day][mealType].forEach(recipe => {
-                        mealPlanData.meal_items.push({
-                            recipe_id: recipe.id,
-                            day: day,
-                            meal_type: mealType
-                        });
+                if (selectedRecipes[day]) {  // Check if this day exists
+                    Object.keys(selectedRecipes[day]).forEach(mealType => {
+                        if (selectedRecipes[day][mealType] && Array.isArray(selectedRecipes[day][mealType])) {  // Check if this meal type exists and is an array
+                            selectedRecipes[day][mealType].forEach(recipe => {
+                                mealPlanData.meal_items.push({
+                                    recipe_id: recipe.id,
+                                    day: day,
+                                    meal_type: mealType
+                                });
+                            });
+                        }
                     });
-                });
+                }
             });
-
-            // Submit meal plan data to backend
-            await createMealPlan(mealPlanData);
-            navigate('/mealplans');
         } 
         catch (err) {
             setError('Error creating meal plan. Please try again.');

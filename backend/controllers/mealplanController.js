@@ -95,7 +95,7 @@ export const getAllMealPlans = async (req, res) => {
     }
 }
 
-// Get a meal plan by ID
+// Get a meal plan by ID 
 export const getMealPlanById = async (req, res) => {
     const {id} = req.params;
     try {
@@ -104,33 +104,32 @@ export const getMealPlanById = async (req, res) => {
             .select(`*,mealplanitems:mealplanitems(*,recipe:recipes(*))`)
             .eq('id', id)
             .single()
-        
-        const {data: mealplanitems, error: mealplanitemsError} = await supabase
-            .from('mealplanitems')
-            .select('*')
-            .eq('mealplan_id', id)
-
-        if (mealplanError) { 
+         
+        if (mealplanError) {
             console.error('Supabase meal plan error:', mealplanError);
             return res.status(500).json({ error: "Error fetching meal plan."});
         }
-
-        if (mealplanitemsError) {
-            console.error('Supabase meal plan items error:', mealplanitemsError);
-            return res.status(500).json({ error: "Error fetching meal plan items."});
-        }
-
+         
+        // Transform the data to match frontend expectations
         const transformedMealplan = {
             ...mealplan,
-            recipes: mealplan.mealplanitems.map(item => item.recipe)
+            // Create meal_items array for frontend
+            meal_items: mealplan.mealplanitems.map(item => ({
+                id: item.id,
+                day: item.day,
+                meal_type: item.meal_type,
+                recipe: item.recipe
+            }))
         };
-
+         
         res.status(200).json(transformedMealplan)
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal server error."})
     }
 }
+
+
 
 // Update a meal plan by ID
 export const updateMealPlan = async (req, res) => {
