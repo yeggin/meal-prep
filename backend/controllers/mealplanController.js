@@ -3,7 +3,7 @@ import supabase from '../supabase.js';
 // Create a new meal plan
 export const createMealPlan = async (req, res) => {
     try {
-        const { name, start_date, end_date, meal_items } = req.body;
+        const { name, start_date, end_date, meal_items=[] } = req.body;
 
         const { data: mealplan, error: mealplanError } = await supabase
             .from('mealplans')
@@ -135,16 +135,7 @@ export const getMealPlanById = async (req, res) => {
 // Update a meal plan by ID
 export const updateMealPlan = async (req, res) => {
     const { id } = req.params;
-    const { name, start_date, end_date } = req.body;
-    let meal_items = [];
-    try {
-        meal_items = req.body.meal_items ? JSON.parse(req.body.meal_items) : [];
-    } 
-    catch (e) {
-        console.error("JSON parse error:", e);
-        return res.status(400).json({ error: "Invalid meal plan items format" });
-    }
-
+    const { name, start_date, end_date, meal_items = [] } = req.body;
 
     try {
         const { data: mealplan, error: mealplanError } = await supabase
