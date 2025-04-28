@@ -106,6 +106,10 @@ export default function MealPlanNew() {
                     });
                 }
             });
+            const response = await createMealPlan(mealPlanData);
+            console.log("Meal plan created:", response);
+            navigate('/mealplans');
+
         } 
         catch (err) {
             setError('Error creating meal plan. Please try again.');
