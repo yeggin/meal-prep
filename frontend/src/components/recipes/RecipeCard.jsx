@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
 import { Edit, Trash2, MoreHorizontal } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function RecipeCard({ recipe, onDelete}) {
     const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef(null);
 
     const handleDelete = (e) => {
         e.preventDefault();
@@ -14,6 +15,21 @@ export default function RecipeCard({ recipe, onDelete}) {
         }
     };
 
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+          if (menuRef.current && !menuRef.current.contains(event.target)) {
+            setMenuOpen(false);
+          }
+        };
+    
+        if (menuOpen) {
+          document.addEventListener('click', handleClickOutside);
+        }
+        return () => {
+          document.removeEventListener('click', handleClickOutside);
+        };
+      }, [menuOpen]);
+
     return (
         <div className="overflow-hidden rounded-lg border bg-card">            
             {/* recipe details */}
@@ -22,7 +38,7 @@ export default function RecipeCard({ recipe, onDelete}) {
                     <Link to={`/recipes/${recipe.id}`}>
                         <h3 className="font-medium mb-1">{recipe.name}</h3>
                     </Link>
-                    <div className="relative">
+                    <div className="relative" ref={menuRef}>
                         <Button
                             variant="ghost"
                             size="icon"

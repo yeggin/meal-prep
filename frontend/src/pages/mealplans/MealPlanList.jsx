@@ -123,7 +123,7 @@ export default function MealPlanList() {
                 <div className="text-center py-8">
                 <p className="text-muted-foreground">Loading meal plans...</p>
                 </div>
-            ) : recipes.length === 0 ? (
+            ) : mealPlans.length === 0 ? (
                 <div className="text-center py-8">
                 <p className="text-muted-foreground">No meal plans found.</p>
                 </div>
