@@ -1,6 +1,5 @@
-//TODO: add calories once u have ai 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; // Add useLocation
 import { Upload } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 // TODO: import PageHeader from '../../components/layout/PageHeader';
@@ -10,17 +9,38 @@ import { createRecipe } from '../../api/recipes';
 
 export default function RecipeNew() {
     const navigate = useNavigate();
+    const location = useLocation(); // Add this to access navigation state
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [selectedFileName, setSelectedFileName] = useState('');
+
+    // Initialize form with default values or prefilled data from AI generator
+    const prefillData = location.state?.prefillData || null;
+
+    // Add useEffect to initialize form with prefill data when available
+    useEffect(() => {
+        if (prefillData) {
+            console.log("Received prefill data:", prefillData);
+            setFormData({
+                name: prefillData.name || '',
+                category: prefillData.category || 'Meal',
+                image: null,
+                duration: prefillData.duration || 0,
+                calories: prefillData.calories || 0,
+                description: prefillData.description || '',
+                ingredients: prefillData.ingredients?.length ? prefillData.ingredients : [''],
+                instructions: prefillData.instructions?.length ? prefillData.instructions : [''],
+            });
+        }
+    }, [prefillData]);
 
     const [formData, setFormData] = useState({
         name: '',
         category: 'Meal',
         image: null,
         duration: 0,
-        //calories: 0,
+        calories: 0,
         description: '',
         ingredients: [''],
         instructions: [''],
@@ -30,6 +50,13 @@ export default function RecipeNew() {
     const handleFormChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
+    };
+
+    // Handle numeric input change (for duration and calories)
+    const handleNumericChange = (e) => {
+        const { name, value } = e.target;
+        const numericValue = value === '' ? 0 : parseInt(value, 10);
+        setFormData({ ...formData, [name]: numericValue });
     };
 
     // Handle image change
@@ -62,7 +89,6 @@ export default function RecipeNew() {
             setIsSubmitting(true);
             setError(null);
 
-
             const formToSubmit = new FormData();
             formToSubmit.append('name', formData.name);
             formToSubmit.append('category', formData.category);
@@ -70,6 +96,7 @@ export default function RecipeNew() {
                 formToSubmit.append('image', formData.image);
             }
             formToSubmit.append('duration', formData.duration);
+            formToSubmit.append('calories', formData.calories);
             formToSubmit.append('description', formData.description);
             formToSubmit.append('ingredients', JSON.stringify(formData.ingredients));
             formToSubmit.append('instructions', JSON.stringify(formData.instructions));
@@ -96,13 +123,6 @@ export default function RecipeNew() {
         const fileInput = document.getElementById('image-upload');
         if (fileInput) fileInput.value = '';
     };
-
-    // Troubleshooting for image upload
-    useEffect(() => {
-        console.log("Image file selected:", formData.image);
-        console.log("Image preview state:", imagePreview ? "Preview available" : "No preview");
-    }, [formData.image, imagePreview]);
-
 
     return (
         <div className="space-y-4 px-4 py-6">
@@ -133,7 +153,7 @@ export default function RecipeNew() {
                 
 
                     {/* Category Input */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-2">
                             <label htmlFor="category" className="text-sm font-medium">
                                 Category
@@ -147,7 +167,6 @@ export default function RecipeNew() {
                             >
                                 <option value="Meal">Meal</option>
                                 <option value="Snack">Snack</option>
-                                {/* <option value="dessert">Dessert</option> */}
                             </select>
                         </div>
 
@@ -161,10 +180,31 @@ export default function RecipeNew() {
                                 id="duration"
                                 name="duration"
                                 value={formData.duration}
-                                onChange={handleFormChange}
+                                onChange={handleNumericChange}
                                 placeholder="e.g., 15"
                                 className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                             />
+                        </div>
+                        {/* Calories input */}
+                        <div className="space-y-2">
+                            <label htmlFor="calories" className="block text-sm font-medium">
+                                Calories (kcal)
+                            </label>
+                            <input
+                                id="calories"
+                                name="calories"
+                                type="number"
+                                min="0"
+                                value={formData.calories}
+                                onChange={handleNumericChange}
+                                className="w-full border rounded-md p-2"
+                                placeholder="Estimated calories per serving"
+                            />
+                            {prefillData?.calories && (
+                                <p className="text-xs text-muted-foreground">
+                                    AI estimated calories: {prefillData.calories} kcal
+                                </p>
+                            )}
                         </div>
                     </div>
                     
@@ -243,9 +283,6 @@ export default function RecipeNew() {
                         </div>
                     )}
                 </div>
-
-
-
                 
                 {/* Ingredients input */}
                 <div className="rounded-lg border bg-card p-4 space-y-3">

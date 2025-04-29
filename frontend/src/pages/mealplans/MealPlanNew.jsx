@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { ChevronLeft, Plus, X, CalendarDays } from "lucide-react";
@@ -14,8 +14,7 @@ export default function MealPlanNew() {
     
     const [formData, setFormData] = useState({
         name: '',
-        start_date: "",
-        end_date: "",
+        // Removed start_date and end_date fields
     });
 
     const [activeDay, setActiveDay] = useState("Mon");
@@ -23,7 +22,6 @@ export default function MealPlanNew() {
     const weekDays = ["Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const mealTypes = ["Breakfast", "Lunch", "Dinner", "Snacks"];
     
-
     // Handle form data change
     const handleFormChange = (e) => {
         const { name, value } = e.target;
@@ -72,8 +70,8 @@ export default function MealPlanNew() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.name || !formData.start_date || !formData.end_date) {
-            setError('Please fill in all required fields');
+        if (!formData.name) {
+            setError('Please enter a meal plan name');
             return;
         }
 
@@ -81,15 +79,12 @@ export default function MealPlanNew() {
             setIsSubmitting(true);
             setError(null);
 
-            // Prepare meal plan data
+            // Prepare meal plan data - without start/end dates
             const mealPlanData = {
                 name: formData.name,
-                start_date: formData.start_date,
-                end_date: formData.end_date,
                 meal_items: []
             };
 
-            // Convert selectedRecipes structure to meal_items array for backend
             // Convert selectedRecipes structure to meal_items array for backend
             Object.keys(selectedRecipes).forEach(day => {
                 if (selectedRecipes[day]) {  // Check if this day exists
@@ -165,36 +160,6 @@ export default function MealPlanNew() {
                             placeholder="e.g., Weekly Diet Plan"
                             className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                         />
-                    </div>
-                
-                    {/* Date Input */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                            <label htmlFor="start-date" className="text-sm font-medium">
-                                Start Date
-                            </label>
-                            <input
-                                type="date"
-                                id="start-date"
-                                name="start_date"
-                                value={formData.start_date || ""}
-                                onChange={handleFormChange}
-                                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label htmlFor="end-date" className="text-sm font-medium">
-                                End Date
-                            </label>
-                            <input
-                                type="date"
-                                id="end-date"
-                                name="end_date"
-                                value={formData.end_date}
-                                onChange={handleFormChange}
-                                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            />
-                        </div>
                     </div>
                 </div>
 

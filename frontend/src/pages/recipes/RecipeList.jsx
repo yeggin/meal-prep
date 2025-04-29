@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Plus } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import NavBar from '../../components/ui/NavBar';
 import RecipeCard from '../../components/recipes/RecipeCard';
 import { getRecipes, deleteRecipe } from '../../api/recipes';
 import apiClient from '../../api/client';
@@ -138,6 +139,7 @@ export default function RecipeList() {
                 ))}
                 </div>
             )}
+            <NavBar />
         </div>
     );
 }

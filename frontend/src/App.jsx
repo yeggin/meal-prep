@@ -12,6 +12,8 @@ import RecipeEdit from './pages/recipes/RecipeEdit';
 import MealPlanList from './pages/mealplans/MealPlanList';
 import MealPlanNew from './pages/mealplans/MealPlanNew';
 import MealPlanEdit from './pages/mealplans/MealPlanEdit';
+import AIRecipeGenerator from './pages/ai-assistant/RecipeGenerator';
+// import Home from './pages/Home';
 
 
 // import Budibase from './pages/Budibase'; // adjust path if needed
@@ -27,7 +29,7 @@ function App() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Routes>
-          <Route path="/" element={<Navigate to="/recipes" />} />
+          {/* <Route path="/" element={<Home />} /> */}
           <Route path="/recipes" element={<RecipeList />}/>
           <Route path="/recipes/new" element={<RecipeNew />}/>
           <Route path="/recipes/:id" element={<RecipeDetail />}/>
@@ -35,6 +37,7 @@ function App() {
           <Route path="/mealplans" element={<MealPlanList />}/>
           <Route path="/mealplans/new" element={<MealPlanNew />}/>
           <Route path="/mealplans/:id" element={<MealPlanEdit />}/>
+          <Route path="/ai-assistant" element={<AIRecipeGenerator />} />
           {/* <Route path="/budibase" element={<Budibase />}/> */}
       </Routes>
     </div>
