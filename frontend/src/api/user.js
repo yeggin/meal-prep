@@ -1,65 +1,53 @@
 // api/user.js
 import apiClient from './client';
-import { jwtDecode } from 'jwt-decode'; // Updated import statement
 
-// Get the current user ID from JWT token
 export const getCurrentUserId = () => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return null;
-    }
-    
-    // Decode the JWT token to get the user ID
-    const decoded = jwtDecode(token);
-    return decoded.sub || decoded.user_id || decoded.id;
-  } catch (error) {
-    console.error("Error getting current user ID:", error);
-    return null;
-  }
+  return localStorage.getItem('userId');
 };
 
-// Get the current user profile
-export const getCurrentUser = async () => {
-  try {
-    const response = await apiClient.get('/users/me');
-    return response.data;
-  } catch (error) {
-    console.error("Error getting current user:", error);
-    return null;
-  }
+export const getAuthToken = () => {
+  return localStorage.getItem('authToken');
 };
 
-// Sign in with email and password
-export const signIn = async (email, password) => {
+export const isAuthenticated = () => {
+  return !!getAuthToken();
+};
+
+export const login = async (credentials) => {
   try {
-    const response = await apiClient.post('/auth/login', { email, password });
+    const response = await apiClient.post('/auth/login', credentials);
     
-    // Store token in localStorage
+    // Save auth data in localStorage
     if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('authToken', response.data.token);
+    }
+    
+    if (response.data.user && response.data.user.id) {
+      localStorage.setItem('userId', response.data.user.id);
     }
     
     return response.data;
   } catch (error) {
-    console.error("Error signing in:", error);
+    console.error("Login error:", error);
     throw error;
   }
 };
 
-// Sign up with email and password
-export const signUp = async (email, password) => {
+export const logout = () => {
+  // Clear auth data from localStorage
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('userId');
+  
+  // You can also make a logout API call if your backend requires it
+  // return apiClient.post('/auth/logout');
+};
+
+export const getUserProfile = async () => {
   try {
-    const response = await apiClient.post('/auth/register', { email, password });
+    const response = await apiClient.get('/user/profile');
     return response.data;
   } catch (error) {
-    console.error("Error signing up:", error);
+    console.error("Error fetching user profile:", error);
     throw error;
   }
-};
-
-// Sign out
-export const signOut = () => {
-  localStorage.removeItem('token');
-  return true;
 };

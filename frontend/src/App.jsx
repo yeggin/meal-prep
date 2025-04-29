@@ -34,7 +34,7 @@ function App() {
             <Route path="/mealplans" element={<ProtectedRoute><MealPlanList /></ProtectedRoute>} />
             <Route path="/mealplans/new" element={<ProtectedRoute><MealPlanNew /></ProtectedRoute>} />
             <Route path="/mealplans/:id" element={<ProtectedRoute><MealPlanEdit /></ProtectedRoute>} />
-            <Route path="/recipe-generator" element={<ProtectedRoute><AIRecipeGenerator /></ProtectedRoute>} />
+            <Route path="/generate-recipes" element={<ProtectedRoute><AIRecipeGenerator /></ProtectedRoute>} />
             {/* <Route path="/budibase" element={<ProtectedRoute><Budibase /></ProtectedRoute>} /> */}
 
             {/* Redirect to login by default */}
