@@ -123,8 +123,7 @@ export const generateRecipesWithAI = async (requestData) => {
             'snack': 'Snack',
             'dessert': 'Snack'
         };
-        const OPENAI_COMPATIBLE_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || 
-            "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"; 
+        const OPENAI_COMPATIBLE_API_KEY = import.meta.env.VITE_OPENAI_API_KEY 
         const OPENAI_COMPATIBLE_ENDPOINT = import.meta.env.VITE_OPENAI_ENDPOINT || 
             "https://api.openai.com/v1/chat/completions";
         
