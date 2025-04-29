@@ -27,11 +27,8 @@ const dietaryPreferences = [
 
 // Meal types
 const mealTypes = [
-  { id: "breakfast", label: "Breakfast" },
-  { id: "lunch", label: "Lunch" },
-  { id: "dinner", label: "Dinner" },
-  { id: "snack", label: "Snack" },
-  { id: "dessert", label: "Dessert" },
+  { id: "meal", label: "Meal" },
+  { id: "snack", label: "Snack" }
 ];
 
 export default function AIRecipeGenerator() {
@@ -39,7 +36,7 @@ export default function AIRecipeGenerator() {
   const [loading, setLoading] = useState(false);
   const [showResponse, setShowResponse] = useState(false);
   const [selectedPreferences, setSelectedPreferences] = useState([]);
-  const [selectedMealType, setSelectedMealType] = useState("dinner");
+  const [selectedMealType, setSelectedMealType] = useState("meal");
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [calorieTarget, setCalorieTarget] = useState("");
   const [generatedRecipes, setGeneratedRecipes] = useState([]);
@@ -74,9 +71,7 @@ export default function AIRecipeGenerator() {
         additionalInfo: additionalInfo
       };
       
-      // Call AI service
-      console.log("Loaded OpenAI API Key:", process.env.OPENAI_API_KEY?.slice(0, 8)); // do NOT log full key!
-
+      
       const recipes = await generateRecipesWithAI(requestData);
       setGeneratedRecipes(recipes);
       setShowResponse(true);
@@ -134,7 +129,7 @@ export default function AIRecipeGenerator() {
   const resetForm = () => {
     setShowResponse(false);
     setSelectedPreferences([]);
-    setSelectedMealType("dinner");
+    setSelectedMealType("meal");
     setAdditionalInfo("");
     setCalorieTarget("");
   };
