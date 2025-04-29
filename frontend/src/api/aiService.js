@@ -28,7 +28,7 @@ export const generateRecipesWithAI = async (params) => {
         }
       ],
       temperature: 0.7,
-      response_format: { type: "json_object" }
+    //   response_format: { type: "json_object" }
     };
 
     // Make the request to the backend proxy endpoint
