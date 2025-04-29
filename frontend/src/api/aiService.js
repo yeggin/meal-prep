@@ -123,9 +123,6 @@ export const generateRecipesWithAI = async (requestData) => {
             'snack': 'Snack',
             'dessert': 'Snack'
         };
-        const OPENAI_COMPATIBLE_API_KEY = import.meta.env.VITE_OPENAI_API_KEY 
-        const OPENAI_COMPATIBLE_ENDPOINT = import.meta.env.VITE_OPENAI_ENDPOINT
-    
         
         // Create a more structured prompt
         let prompt = `Generate 3 detailed ${mealType || 'meal'} recipes`;
@@ -177,11 +174,22 @@ export const generateRecipesWithAI = async (requestData) => {
             max_tokens: 2000
         };
         
-        const result = await callApiWithBearerToken(
-            OPENAI_COMPATIBLE_ENDPOINT,
-            OPENAI_COMPATIBLE_API_KEY,
-            requestBody
-        );
+        console.log("Sending request to generate recipes");
+        
+        const response = await fetch("/api/generate-recipes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ requestBody }),
+        });
+          
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`API error: ${response.status} ${response.statusText}`, errorText);
+            throw new Error(`API error: ${response.status} ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log("Recipe generation response:", result);
         
         const aiResponse = result.choices[0]?.message?.content || "";
         
