@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Loader2, ChevronRight, Plus } from 'lucide-react';
-import { Button } from '../../components/ui/Button';
-import Navbar from '../../components/ui/NavBar';
-import { Card } from '../../components/ui/Card';
-import { Checkbox } from '../../components/ui/Checkbox';
-import { Label } from '../../components/ui/Label';
-import { Textarea } from '../../components/ui/Textarea';
-import { Input } from '../../components/ui/Input';
-import RecipeDetailModal from '../../components/RecipeDetailModal';
+import { Button } from '../ui/Button';
+import Navbar from '../ui/NavBar';
+import { Card } from '../ui/Card';
+import { Checkbox } from '../ui/Checkbox';
+import { Label } from '../ui/Label';
+import { Textarea } from '../ui/Textarea';
+import { Input } from '../ui/Input';
+import RecipeDetailModal from '../RecipeDetailModal';
 
 // Import the AI service
 import { generateRecipesWithAI } from '../../api/aiService';
@@ -75,6 +75,8 @@ export default function AIRecipeGenerator() {
       };
       
       // Call AI service
+      console.log("Loaded OpenAI API Key:", process.env.OPENAI_API_KEY?.slice(0, 8)); // do NOT log full key!
+
       const recipes = await generateRecipesWithAI(requestData);
       setGeneratedRecipes(recipes);
       setShowResponse(true);

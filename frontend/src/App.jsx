@@ -12,7 +12,7 @@ import RecipeEdit from './pages/recipes/RecipeEdit';
 import MealPlanList from './pages/mealplans/MealPlanList';
 import MealPlanNew from './pages/mealplans/MealPlanNew';
 import MealPlanEdit from './pages/mealplans/MealPlanEdit';
-import AIRecipeGenerator from './pages/ai-assistant/RecipeGenerator';
+import AIRecipeGenerator from './components/ai-assistant/RecipeGenerator';
 // import Home from './pages/Home';
 
 
