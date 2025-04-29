@@ -124,13 +124,8 @@ export const generateRecipesWithAI = async (requestData) => {
             'dessert': 'Snack'
         };
         const OPENAI_COMPATIBLE_API_KEY = import.meta.env.VITE_OPENAI_API_KEY 
-        const OPENAI_COMPATIBLE_ENDPOINT = import.meta.env.VITE_OPENAI_ENDPOINT || 
-            "https://api.openai.com/v1/chat/completions";
-        
-        
-        // Add custom headers if needed
-        // For example, if using a different API that requires an API key in X-API-Key header:
-        // headers["X-API-Key"] = OPENAI_COMPATIBLE_API_KEY;
+        const OPENAI_COMPATIBLE_ENDPOINT = import.meta.env.VITE_OPENAI_ENDPOINT
+    
         
         // Create a more structured prompt
         let prompt = `Generate 3 detailed ${mealType || 'meal'} recipes`;
