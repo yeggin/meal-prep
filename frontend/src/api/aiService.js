@@ -27,8 +27,9 @@ export const generateRecipesWithAI = async (params) => {
           content: prompt
         }
       ],
-      temperature: 0.7,
-      response_format: { type: "json_object" }  // Uncomment this for GPT-4 Turbo and newer models
+      temperature: 0.7
+      // Do NOT use response_format with gpt-4-0613
+      // response_format: { type: "json_object" }  // Only works with newer models
     };
     
     console.log("Sending request to backend:", { prompt });
@@ -44,7 +45,16 @@ export const generateRecipesWithAI = async (params) => {
       console.log("Received response content:", content.substring(0, 100) + "...");
       
       try {
-        const parsedResponse = JSON.parse(content);
+        // Attempt to parse the response as JSON
+        // Sometimes OpenAI might return JSON with markdown code blocks, so try to clean that up
+        let cleanedContent = content;
+        if (content.includes("```json")) {
+          cleanedContent = content.split("```json")[1].split("```")[0].trim();
+        } else if (content.includes("```")) {
+          cleanedContent = content.split("```")[1].split("```")[0].trim();
+        }
+        
+        const parsedResponse = JSON.parse(cleanedContent);
         
         // The response should be a JSON object with a recipes array
         if (parsedResponse.recipes && Array.isArray(parsedResponse.recipes)) {
@@ -55,6 +65,7 @@ export const generateRecipesWithAI = async (params) => {
         return Array.isArray(parsedResponse) ? parsedResponse : [parsedResponse];
       } catch (parseError) {
         console.error("Failed to parse JSON response:", parseError);
+        console.error("Response content:", content);
         throw new Error("Invalid JSON response from AI service");
       }
     }
@@ -71,6 +82,11 @@ export const generateRecipesWithAI = async (params) => {
  */
 function constructRecipePrompt(params) {
   const { preferences, mealType, calorieTarget, additionalInfo } = params;
+  
+  // Convert mealType to match your database enum (Meal or Snack)
+  const dbCategory = mealType === 'breakfast' || mealType === 'lunch' || mealType === 'dinner' 
+    ? 'Meal' 
+    : 'Snack';
   
   let prompt = `Generate 3 detailed ${mealType} recipes`;
   
@@ -99,7 +115,7 @@ function constructRecipePrompt(params) {
   - calories: Calories per serving
   - ingredients: Array of ingredient strings with quantities
   - instructions: Array of step-by-step instructions
-  - category: The type of meal
+  - category: The category must be "${dbCategory}" to match my database enum
   
   Format:
   {
@@ -111,7 +127,7 @@ function constructRecipePrompt(params) {
         "calories": 500,
         "ingredients": ["1 cup ingredient 1", "2 tbsp ingredient 2"],
         "instructions": ["Step 1 description", "Step 2 description"],
-        "category": "${mealType}"
+        "category": "${dbCategory}"
       }
     ]
   }`;
