@@ -23,43 +23,87 @@ import mealplanRoutes from './routes/mealplans.js';
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/', mealplanRoutes);
 
-// In your index.js file, update the route handler:
-
 app.post('/api/generate-recipes', async (req, res) => {
     try {
-        const { requestBody } = req.body;
-        
-        console.log("Received request:", JSON.stringify(requestBody, null, 2));
-        
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-            },
-            body: JSON.stringify(requestBody),
+      console.log('Recipe generation request received');
+      
+      // Extract request body
+      const { requestBody } = req.body;
+      
+      if (!requestBody || !requestBody.messages) {
+        console.error('Invalid request format:', req.body);
+        return res.status(400).json({ 
+          error: 'Bad Request', 
+          message: 'Request must include a requestBody with messages' 
+        });
+      }
+      
+      // Log OpenAI request (without sensitive info)
+      console.log('OpenAI Request:', {
+        model: requestBody.model,
+        messageCount: requestBody.messages.length,
+      });
+      
+      // Check if API key is configured
+      if (!process.env.OPENAI_API_KEY) {
+        console.error('OpenAI API key not configured');
+        return res.status(500).json({ 
+          error: 'Server Configuration Error', 
+          message: 'OpenAI API key not configured' 
+        });
+      }
+      
+      try {
+        // Make the API request to OpenAI
+        const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+          },
+          body: JSON.stringify(requestBody)
         });
         
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`OpenAI API error: ${response.status} ${response.statusText}`, errorText);
-            return res.status(response.status).json({
-                error: `OpenAI API error: ${response.status} ${response.statusText}`,
-                details: errorText
-            });
+        // Check for success/error
+        if (!openaiResponse.ok) {
+          let errorMessage = `OpenAI API error: ${openaiResponse.status} ${openaiResponse.statusText}`;
+          
+          try {
+            const errorData = await openaiResponse.json();
+            console.error('OpenAI API error details:', errorData);
+            errorMessage += ` - ${JSON.stringify(errorData)}`;
+          } catch (parseError) {
+            const errorText = await openaiResponse.text();
+            console.error('OpenAI API error (text):', errorText);
+            errorMessage += ` - ${errorText}`;
+          }
+          
+          return res.status(openaiResponse.status).json({ 
+            error: 'OpenAI API Error', 
+            message: errorMessage 
+          });
         }
         
-        const data = await response.json();
-        console.log("OpenAI API response received");
+        // Process successful response
+        const data = await openaiResponse.json();
+        console.log('OpenAI API call successful');
+        
         return res.json(data);
-    } catch (error) {
-        console.error("Error in generate-recipes endpoint:", error);
-        return res.status(500).json({
-            error: "Internal server error",
-            message: error.message
+      } catch (apiError) {
+        console.error('Error during OpenAI API call:', apiError);
+        return res.status(500).json({ 
+          error: 'OpenAI API Communication Error', 
+          message: apiError.message 
         });
+      }
+    } catch (error) {
+      console.error('Unhandled error in generate-recipes endpoint:', error);
+      return res.status(500).json({ 
+        error: 'Internal Server Error', 
+        message: error.message 
+      });
     }
-});
+  });
 
 // Start server
 app.listen(PORT, () => {
