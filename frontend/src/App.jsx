@@ -37,7 +37,7 @@ function App() {
           <Route path="/mealplans" element={<MealPlanList />}/>
           <Route path="/mealplans/new" element={<MealPlanNew />}/>
           <Route path="/mealplans/:id" element={<MealPlanEdit />}/>
-          <Route path="/ai-assistant" element={<AIRecipeGenerator />} />
+          <Route path="/recipe-generator" element={<AIRecipeGenerator />} />
           {/* <Route path="/budibase" element={<Budibase />}/> */}
       </Routes>
     </div>

@@ -5,7 +5,7 @@ const navItems = [
   { name: "Home", href: "/", icon: Home },
   { name: "Meal Plans", href: "/mealplans", icon: CalendarDays },
   { name: "Recipes", href: "/recipes", icon: ChefHat },
-  { name: "AI Assistant", href: "/ai-assistant", icon: Sparkles },
+  { name: "AI Assistant", href: "/recipe-generator", icon: Sparkles },
 ];
 
 export default function Navbar() {
