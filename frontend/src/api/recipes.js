@@ -1,3 +1,5 @@
+// use apiClient to sent HTTP requests to recipe API
+
 import apiClient from './client';
 
 export const getRecipes = async (searchParams = {}) => {

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Label } from '../components/ui/Label';
-import { Card } from '../components/ui/Card';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Label } from '../ui/Label';
+import { Card } from '../ui/Card';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -12,9 +12,9 @@ export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { login, signup } = useAuth();
   const navigate = useNavigate();
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -22,28 +22,13 @@ export default function LoginPage() {
     
     try {
       if (isLogin) {
-        const { error } = await signIn(email, password);
-        if (error) throw error;
-        console.log('Login successful');
+        await login(email, password);
       } else {
-        const { error } = await signUp(email, password);
-        if (error) throw error;
-        console.log('Signup successful');
+        await signup(email, password);
       }
-      
-      // Navigate to mealplans page after successful authentication
-      navigate('/mealplans');
+      navigate('/recipes');
     } catch (err) {
-      console.error('Authentication error:', err);
-      
-      // Handle Supabase specific error messages
-      if (err.message) {
-        setError(err.message);
-      } else if (err.error_description) {
-        setError(err.error_description);
-      } else {
-        setError(isLogin ? 'Login failed. Please check your credentials.' : 'Signup failed. Please try again.');
-      }
+      setError(err.message || 'Authentication failed');
     } finally {
       setLoading(false);
     }
