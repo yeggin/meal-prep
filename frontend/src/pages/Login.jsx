@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { login, signup } = useAuth();
   const navigate = useNavigate();
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,12 +24,25 @@ export default function LoginPage() {
     try {
       if (isLogin) {
         await login(email, password);
+        console.log('Login successful');
       } else {
         await signup(email, password);
+        console.log('Signup successful');
       }
+      
+      // Navigate to mealplans page after successful authentication
       navigate('/mealplans');
     } catch (err) {
-      setError(err.message || 'Authentication failed');
+      console.error('Authentication error:', err);
+      
+      // Handle Supabase specific error messages
+      if (err.message) {
+        setError(err.message);
+      } else if (err.error_description) {
+        setError(err.error_description);
+      } else {
+        setError(isLogin ? 'Login failed. Please check your credentials.' : 'Signup failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
