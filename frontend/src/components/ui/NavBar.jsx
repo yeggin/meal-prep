@@ -2,7 +2,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { CalendarDays, ChefHat, Home, Sparkles } from "lucide-react";
 
 const navItems = [
-  { name: "Home", href: "/", icon: Home },
+//   { name: "Home", href: "/", icon: Home },
   { name: "Meal Plans", href: "/mealplans", icon: CalendarDays },
   { name: "Recipes", href: "/recipes", icon: ChefHat },
   { name: "AI Assistant", href: "/generate-recipes", icon: Sparkles },
@@ -14,7 +14,7 @@ export default function Navbar() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t">
-      <div className="grid grid-cols-4 h-16">
+      <div className="grid grid-cols-3 h-16">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);

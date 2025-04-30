@@ -1,12 +1,14 @@
 import supabase from "../supabase.js";
-const USE_REAL_UPLOADS = false;
+
+// Set this to true when you want to use real image uploads
+const USE_REAL_UPLOADS = true;
 
 // Create new recipe
 export const createRecipe = async (req, res) => {
     console.log('BODY:', req.body);
     console.log('FILE:', req.file);
-    //TODO: calories
-    const {  name, description, category } = req.body;
+    
+    const { name, description, category } = req.body;
     let { duration } = req.body;
 
     const imageFile = req.file || null;
@@ -22,52 +24,9 @@ export const createRecipe = async (req, res) => {
         return res.status(400).json({ error: "Invalid ingredients/instructions format" });
     }
     
-   
     let imageUrl = null;
 
-    // Upload image to Supabase storage bucket if image is provided
-    // if (imageFile) {
-    //     try {
-    //         console.log('Image upload to Supabase is currently disabled');
-    //         console.log('Using placeholder image instead');
-            
-    //         // Generate a placeholder image URL based on the recipe name for some variety
-    //         const recipeName = name.replace(/\s+/g, '+');
-    //         imageUrl = `https://placehold.co/400x300?text=${recipeName}`;
-            
-    //         console.log('Generated placeholder image URL:', imageUrl);
-    //     } catch (uploadErr) {
-    //         console.error("Error setting placeholder image:", uploadErr);
-    //         // Use a default placeholder if even the custom one fails
-    //         imageUrl = 'https://via.placeholder.com/400x300?text=Recipe';
-    //     }
-    // } else {
-    //     console.log('No image provided, no placeholder needed');
-    // }
-    // if (imageFile) {
-        
-        // console.log('Preparing upload to bucket:', 'recipe-images');
-        // console.log('Buffer exists:', !!imageFile.buffer);
-        // console.log('Buffer size:', imageFile.buffer?.length);
-        // try {
-        //     const fileName = `test_${Date.now()}.jpg`;
-            
-        //     // Basic upload with minimal options
-        //     const { data, error } = await supabase.storage
-        //         .from('recipe-images')
-        //         .upload(fileName, imageFile.buffer);
-                
-        //     console.log('Upload result:', { success: !!data, error });
-            
-        //     if (data) {
-        //         imageUrl = supabase.storage
-        //             .from('recipe-images')
-        //             .getPublicUrl(fileName).data.publicUrl;
-        //     }
-        // } catch (err) {
-        //     console.error('Upload exception:', err);
-        // }
-    // }
+    // Handle image upload
     if (imageFile) {
         if (USE_REAL_UPLOADS) {
             try {
@@ -78,110 +37,105 @@ export const createRecipe = async (req, res) => {
                     hasBuffer: !!imageFile.buffer
                 });
                 
-                // Create a safe filename by removing special characters
+                // Create a safe filename by removing special characters and adding timestamp
                 const safeOriginalName = imageFile.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-                const fileName = `${Date.now()}_${safeOriginalName}`;
+                const fileName = `recipe_${Date.now()}_${safeOriginalName}`;
                 
                 console.log('Attempting to upload file:', fileName);
                 
+                // Verify buffer exists and has content
                 if (!imageFile.buffer || imageFile.buffer.length === 0) {
                     throw new Error('Image buffer is empty or undefined');
                 }
                 
+                // Upload to Supabase storage bucket
                 const { data: uploadData, error: uploadError } = await supabase.storage
                     .from('recipe-images')
                     .upload(fileName, imageFile.buffer, {
                         cacheControl: '3600',
-                        upsert: true,
+                        upsert: false, // Don't overwrite existing files with same name
                         contentType: imageFile.mimetype
                     });
 
-                console.log('Upload attempt completed');
                 console.log('Upload response data:', uploadData);
-                console.log('Upload error (if any):', uploadError);
-
+                
                 if (uploadError) {
                     console.error("Supabase image upload error:", uploadError);
-                    return res.status(500).json({ 
-                        error: 'Error uploading image to Supabase', 
-                        details: uploadError,
-                        message: uploadError.message
-                    });
+                    throw new Error(`Upload failed: ${uploadError.message}`);
                 }
                 
-                if (!uploadData || !uploadData.path) {
-                    throw new Error('Upload succeeded but data or path is missing');
-                }
-                
-                const urlResult = supabase.storage
+                // Get public URL for the uploaded image
+                const { data: urlData } = supabase.storage
                     .from('recipe-images')
-                    .getPublicUrl(uploadData.path);
+                    .getPublicUrl(fileName);
                     
-                console.log('URL result:', urlResult);
-                    
-                if (!urlResult || !urlResult.data || !urlResult.data.publicUrl) {
+                if (!urlData || !urlData.publicUrl) {
                     throw new Error('Failed to generate public URL');
                 }
                 
-                imageUrl = urlResult.data.publicUrl;
+                imageUrl = urlData.publicUrl;
                 console.log('Generated image URL:', imageUrl);
             } catch (uploadErr) {
                 console.error("Image upload exception:", uploadErr);
-                console.error("Error stack:", uploadErr.stack);
                 return res.status(500).json({ 
-                    error: 'Exception during image upload',
-                    details: uploadErr.message,
-                    stack: uploadErr.stack
+                    error: 'Error uploading image',
+                    details: uploadErr.message
                 });
             }
         } else {
+            // Fallback to placeholder if real uploads are disabled
             const recipeName = name.replace(/\s+/g, '+');
             imageUrl = `https://placehold.co/400x300?text=${recipeName}`;
-            console.log('Using placeholder image:', imageUrl)
+            console.log('Using placeholder image:', imageUrl);
         }
     }
 
     // Convert empty strings to null or 0 before inserting
     duration = duration === "" ? null : parseInt(duration, 10);
+    
     // Insert recipe data into recipes table
     const { data, error } = await supabase
         .from('recipes')
         .insert([
-            {   //user_id: user_id, // Foreign key
+            {
                 name: name,
                 description: description,
                 duration: duration,
                 category: category,
-                //calories: calories,
                 ingredient_count: ingredients.length,
                 image_url: imageUrl
             }
         ])
         .select()
         .single();
+        
     if (error) {
         console.error("Supabase recipe insert error:", error);
         return res.status(500).json({ error: 'Error creating recipe' });
     }
-    // If ingredients are provided in the request body, insert them into the recipeingredients table
+    
+    // Insert ingredients
     if (ingredients && ingredients.length > 0) {
         const ingredientData = ingredients.map(ingredient => ({
-            recipe_id: data.id, // Foreign key
+            recipe_id: data.id,
             content: ingredient
         }));
+        
         const { error: ingredientError } = await supabase
             .from('recipeingredients')
             .insert(ingredientData);
+            
         if (ingredientError) {
             return res.status(500).json({ error: 'Error adding ingredients' });
         }
     }
-    // If instructions are provided in the request body, insert them into the recipesteps table
+    
+    // Insert instructions
     if (instructions && instructions.length > 0) {
         const instructionData = instructions.map((step, index) => ({
-            recipe_id: data.id, // Foreign key
+            recipe_id: data.id,
             content: step,
-            step_number: index + 1 // Optional: store order
+            step_number: index + 1
         }));
     
         const { error: instructionError } = await supabase
@@ -192,112 +146,16 @@ export const createRecipe = async (req, res) => {
             return res.status(500).json({ error: 'Error adding instructions' });
         }
     }
+    
     res.status(201).json({
         message: 'Recipe created successfully',
         recipe: data,
         ingredients: ingredients,
         steps: instructions
-      });
-    
+    });
 };
 
-// Get all recipes
-export const getAllRecipes = async (req, res) => {
-    try {
-        const searchTerm = req.query.search;
-        let query = supabase.from('recipes').select('*');
-
-        if (searchTerm) {
-            query = query.ilike('name', `%${searchTerm}%`);
-        }
-        
-        const { data, error } = await supabase.from('recipes').select('*');
-
-        if (error) return res.status(500).json({ error: 'Error fetching recipes' });
-
-        res.status(200).json(data);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
-
-// Get recipe by ID
-export const getRecipeById = async (req, res) => {
-    const {id} = req.params;
-    try {
-        const { data: recipe , error: recipeError } = await supabase
-            .from('recipes')
-            .select('*')
-            .eq('id', id) // WHERE id = id
-            .single();
-        
-        const { data: recipeingredients } = await supabase
-            .from('recipeingredients')
-            .select('*')
-            .eq('recipe_id', id); // WHERE recipe_id = recipe_id
-        
-        const { data: recipesteps } = await supabase
-            .from('recipesteps')
-            .select('*')
-            .eq('recipe_id', id) // WHERE recipe_id = recipe_id
-            .order('step_number', { ascending: true });
-        
-        if (recipeError) return res.status(500).json({ error: 'Error fetching recipe' });
-        
-        res.status(200).json({ ...recipe, recipeingredients, recipesteps });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
-
-// Get all ingredients for a recipe
-export const getRecipeIngredients = async (req, res) => {
-    const { recipe_id } = req.params;
-
-    try {
-        const { data, error } = await supabase
-            .from('recipeingredients')
-            .select('*')
-            .eq('recipe_id', recipe_id); // WHERE recipe_id = recipe_id
-
-        if (error) {
-            console.error('Supabase error:', error);
-            return res.status(500).json({ error: 'Error fetching ingredients' });
-        }
-
-        res.status(200).json(data);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
-
-// Get all steps for a recipe
-export const getRecipeSteps = async (req, res) => {
-    const { recipe_id } = req.params;
-
-    try {
-        const { data, error } = await supabase
-            .from('recipesteps')
-            .select('*')
-            .eq('recipe_id', recipe_id) // WHERE recipe_id = recipe_id
-            .order('step_number', { ascending: true });
-
-        if (error) {
-            console.error('Supabase error:', error);
-            return res.status(500).json({ error: 'Error fetching steps' });
-        }
-
-        res.status(200).json(data);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
-
-// Update a recipe
+// Update a recipe with image handling
 export const updateRecipe = async (req, res) => {
     const { id } = req.params;
     const { name, description, category } = req.body;
@@ -331,23 +189,46 @@ export const updateRecipe = async (req, res) => {
         let imageUrl = currentRecipe.image_url;
 
         // Only upload and update image if a new one is provided
-        if (imageFile) {
-            const fileName = `${Date.now()}_${imageFile.originalname}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('recipe-images')
-                .upload(fileName, imageFile.buffer, {
-                    cacheControl: '3600',
-                    upsert: true,
+        if (imageFile && USE_REAL_UPLOADS) {
+            try {
+                // Create a safe filename
+                const safeOriginalName = imageFile.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+                const fileName = `recipe_update_${Date.now()}_${safeOriginalName}`;
+                
+                // Upload to Supabase storage
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('recipe-images')
+                    .upload(fileName, imageFile.buffer, {
+                        cacheControl: '3600',
+                        upsert: false,
+                        contentType: imageFile.mimetype
+                    });
+
+                if (uploadError) {
+                    throw new Error(`Upload failed: ${uploadError.message}`);
+                }
+
+                // Get public URL
+                const { data: urlData } = supabase.storage
+                    .from('recipe-images')
+                    .getPublicUrl(fileName);
+                
+                if (!urlData || !urlData.publicUrl) {
+                    throw new Error('Failed to generate public URL');
+                }
+                
+                imageUrl = urlData.publicUrl;
+            } catch (uploadErr) {
+                console.error("Image upload exception during update:", uploadErr);
+                return res.status(500).json({ 
+                    error: 'Error uploading image during update',
+                    details: uploadErr.message
                 });
-
-            if (uploadError) {
-                console.error("Supabase image upload error:", uploadError);
-                return res.status(500).json({ error: 'Error uploading image' });
             }
-
-            imageUrl = supabase.storage
-                .from('recipe-images')
-                .getPublicUrl(uploadData.path).data.publicUrl;
+        } else if (imageFile && !USE_REAL_UPLOADS) {
+            // Use placeholder if real uploads are disabled
+            const recipeName = name.replace(/\s+/g, '+');
+            imageUrl = `https://placehold.co/400x300?text=${recipeName}`;
         }
 
         // Convert empty strings to null or 0 before updating
@@ -362,7 +243,7 @@ export const updateRecipe = async (req, res) => {
                 duration: duration,
                 category: category,
                 ingredient_count: ingredients.length,
-                image_url: imageUrl // Use the current or new image URL
+                image_url: imageUrl
             })
             .eq('id', id)
             .select()
@@ -432,7 +313,103 @@ export const updateRecipe = async (req, res) => {
             }
         }
 
-        res.status(200).json({message: 'Recipe updated successfully.', data});
+        res.status(200).json({message: 'Recipe updated successfully', data});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Get all recipes
+export const getAllRecipes = async (req, res) => {
+    try {
+        const searchTerm = req.query.search;
+        let query = supabase.from('recipes').select('*');
+
+        if (searchTerm) {
+            query = query.ilike('name', `%${searchTerm}%`);
+        }
+        
+        const { data, error } = await query;
+
+        if (error) return res.status(500).json({ error: 'Error fetching recipes' });
+
+        res.status(200).json(data);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Get recipe by ID
+export const getRecipeById = async (req, res) => {
+    const {id} = req.params;
+    try {
+        const { data: recipe , error: recipeError } = await supabase
+            .from('recipes')
+            .select('*')
+            .eq('id', id)
+            .single();
+        
+        const { data: recipeingredients } = await supabase
+            .from('recipeingredients')
+            .select('*')
+            .eq('recipe_id', id);
+        
+        const { data: recipesteps } = await supabase
+            .from('recipesteps')
+            .select('*')
+            .eq('recipe_id', id)
+            .order('step_number', { ascending: true });
+        
+        if (recipeError) return res.status(500).json({ error: 'Error fetching recipe' });
+        
+        res.status(200).json({ ...recipe, recipeingredients, recipesteps });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Get all ingredients for a recipe
+export const getRecipeIngredients = async (req, res) => {
+    const { recipe_id } = req.params;
+
+    try {
+        const { data, error } = await supabase
+            .from('recipeingredients')
+            .select('*')
+            .eq('recipe_id', recipe_id);
+
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(500).json({ error: 'Error fetching ingredients' });
+        }
+
+        res.status(200).json(data);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+// Get all steps for a recipe
+export const getRecipeSteps = async (req, res) => {
+    const { recipe_id } = req.params;
+
+    try {
+        const { data, error } = await supabase
+            .from('recipesteps')
+            .select('*')
+            .eq('recipe_id', recipe_id)
+            .order('step_number', { ascending: true });
+
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(500).json({ error: 'Error fetching steps' });
+        }
+
+        res.status(200).json(data);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
@@ -447,7 +424,7 @@ export const deleteRecipe = async (req, res) => {
         const { data, error } = await supabase
             .from('recipes')
             .delete()
-            .eq('id', id) // WHERE id = id
+            .eq('id', id);
 
         if (error) {
             console.error('Supabase error:', error);
@@ -459,4 +436,3 @@ export const deleteRecipe = async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
-
