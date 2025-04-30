@@ -12,10 +12,9 @@ export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, signup } = useAuth();
+  const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -23,10 +22,12 @@ export default function LoginPage() {
     
     try {
       if (isLogin) {
-        await login(email, password);
+        const { error } = await signIn(email, password);
+        if (error) throw error;
         console.log('Login successful');
       } else {
-        await signup(email, password);
+        const { error } = await signUp(email, password);
+        if (error) throw error;
         console.log('Signup successful');
       }
       
